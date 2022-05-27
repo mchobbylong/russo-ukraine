@@ -1,6 +1,6 @@
 # Build igraph instance from edge list
 library("igraph")
-edgelist <- read.table("edges_list.tsv", sep='\t', header=FALSE, col.names=c("hashtagA", "hashtagB", "weight"))
+edgelist <- read.table("edges_list.tsv", sep="\t", header=FALSE, col.names=c("hashtagA", "hashtagB", "weight"))
 G.igraph <- graph.data.frame(edgelist, directed=FALSE)
 
 # Load up node attributes
@@ -10,11 +10,10 @@ V(G.igraph)$category <- attrs.ordered$category
 V(G.igraph)$frequency <- attrs.ordered$frequency
 
 detach("package:igraph")
-library("intergraph")
 library("statnet")
 
 # Convert igraph instance to statnet instance
-G.statnet <- asNetwork(G.igraph)
+G.statnet <- intergraph::asNetwork(G.igraph)
 
 # Prepare for reproducible results
 ergm.control <- control.ergm(seed=12315, MCMLE.maxit=1000)
@@ -27,9 +26,13 @@ print(summary(model.homophily))
 model.frequency <- ergm(G.statnet~edges + nodecov("frequency"), control=ergm.control)
 print(summary(model.frequency))
 
-# Category-specific virality (probability of use with other categories)
+# Category-specific differential homophily (use with other categories)
 model.category <- ergm(G.statnet~edges + nodematch("category", diff=TRUE), control=ergm.control)
 print(summary(model.category))
+
+# Summarize all terms
+model.all <- ergm(G.statnet~edges + nodematch("category") + nodecov("frequency") + nodematch("category", diff=TRUE), control=ergm.control)
+# print(summary(model.all))
 
 
 # ==== Below are models for valued ERGM (edge weights as counts) ====
